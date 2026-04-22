@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BABIA · Control de Embarques</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700;800&display=swap');
+  :root {
+    --g9:#1B5E20;--g7:#2E7D32;--g5:#4CAF50;--g1:#E8F5E9;
+    --or:#E65100;--olt:#FFF3E0;--bl:#0D47A1;--blt:#E3F2FD;
+    --rd:#C62828;--rlt:#FFEBEE;--gr:#37474F;--g2:#ECEFF1;
+    --bg:#F5F7FA;--wh:#FFFFFF;--sh:0 2px 12px rgba(0,0,0,0.08);--r:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Sora',sans-serif;background:var(--bg);color:#1C2833;min-height:100vh;}
+  header{background:linear-gradient(135deg,var(--g9),var(--g7));padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 20px rgba(0,0,0,0.25);position:sticky;top:0;z-index:100;}
+  .logo{display:flex;align-items:center;gap:12px;}
+  .logo-icon{width:38px;height:38px;background:rgba(255,255,255,0.15);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+  .logo h1{font-size:19px;font-weight:800;color:#fff;letter-spacing:2px;}
+  .logo p{font-size:9px;color:rgba(255,255,255,0.6);letter-spacing:1px;margin-top:1px;}
+  .hdr-r{display:flex;align-items:center;gap:14px;}
+  .hdr-date{font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,0.55);}
+  .sync{font-size:11px;color:rgba(255,255,255,0.75);display:flex;align-items:center;}
+  .dot{width:8px;height:8px;border-radius:50%;background:#69F0AE;display:inline-block;margin-right:6px;animation:pulse 2s infinite;}
+  .dot.off{background:#FF5252;animation:none;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  main{padding:24px 28px;max-width:1400px;margin:0 auto;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+  .kpi{background:var(--wh);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh);border-left:4px solid transparent;transition:transform .2s;position:relative;overflow:hidden;}
+  .kpi:hover{transform:translateY(-2px);}
+  .kpi::after{content:attr(data-icon);position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:34px;opacity:.07;}
+  .kpi-l{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gr);margin-bottom:7px;}
+  .kpi-v{font-size:34px;font-weight:800;line-height:1;}
+  .kpi-s{font-size:10px;color:#999;margin-top:5px;}
+  .kpi.green{border-color:var(--g7);}.kpi.green .kpi-v{color:var(--g7);}
+  .kpi.orange{border-color:var(--or);}.kpi.orange .kpi-v{color:var(--or);}
+  .kpi.red{border-color:var(--rd);}.kpi.red .kpi-v{color:var(--rd);}
+  .kpi.blue{border-color:var(--bl);}.kpi.blue .kpi-v{color:var(--bl);}
+  .sec{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gr);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .sec::after{content:'';flex:1;height:1px;background:var(--g2);}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+  .toolbar input,.toolbar select{font-family:'Sora',sans-serif;font-size:12px;padding:7px 12px;border:1.5px solid var(--g2);border-radius:7px;background:var(--wh);color:#1C2833;outline:none;transition:border-color .2s;}
+  .toolbar input:focus,.toolbar select:focus{border-color:var(--g5);}
+  .toolbar input{min-width:200px;}
+  .btn-add{margin-left:auto;background:var(--g7);color:#fff;border:none;border-radius:7px;padding:7px 16px;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s;}
+  .btn-add:hover{background:var(--g9);}
+  .btn-ref{background:var(--g2);border:none;border-radius:7px;padding:7px 12px;font-family:'Sora',sans-serif;font-size:12px;cursor:pointer;}
+  .btn-ref:hover{background:var(--gr);color:#fff;}
+  .tw{background:var(--wh);border-radius:var(--r);box-shadow:var(--sh);overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead th{background:#1C2833;color:#fff;padding:10px 13px;font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0;cursor:pointer;user-select:none;}
+  thead th:hover{background:var(--gr);}
+  tbody tr{border-bottom:1px solid var(--g2);transition:background .15s;}
+  tbody tr:hover{background:var(--g1);}
+  tbody td{padding:9px 13px;white-space:nowrap;vertical-align:middle;}
+  .badge{font-family:'DM Mono',monospace;font-size:10px;background:var(--g2);padding:2px 7px;border-radius:4px;color:var(--gr);}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.5px;}
+  .pt{background:var(--olt);color:var(--or);}
+  .pe{background:var(--g1);color:var(--g9);}
+  .pp{background:var(--blt);color:var(--bl);}
+  .pr{background:var(--rlt);color:var(--rd);}
+  .pc{background:var(--g2);color:var(--gr);}
+  .temp{font-family:'DM Mono',monospace;font-size:11px;color:var(--bl);font-weight:500;}
+  .empty{text-align:center;padding:40px;color:#bbb;}
+  .pag{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-top:1px solid var(--g2);font-size:10px;color:#999;}
+  .pbtns{display:flex;gap:5px;}
+  .pb{background:var(--g2);border:none;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:10px;}
+  .pb.active{background:var(--g7);color:#fff;}
+  /* MODAL */
+  .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;}
+  .ov.on{display:flex;}
+  .modal{background:var(--wh);border-radius:13px;width:660px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);animation:su .25s ease;}
+  @keyframes su{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .mhdr{background:linear-gradient(135deg,var(--g9),var(--g7));padding:18px 22px;border-radius:13px 13px 0 0;display:flex;align-items:center;justify-content:space-between;}
+  .mhdr h2{color:#fff;font-size:14px;font-weight:700;}
+  .mclose{background:none;border:none;color:rgba(255,255,255,0.7);font-size:20px;cursor:pointer;}
+  .mbody{padding:22px;}
+  .fg{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .fi{display:flex;flex-direction:column;gap:4px;}
+  .fi.full{grid-column:1/-1;}
+  .fi label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gr);}
+  .fi input,.fi select,.fi textarea{font-family:'Sora',sans-serif;font-size:12px;padding:8px 11px;border:1.5px solid var(--g2);border-radius:7px;color:#1C2833;outline:none;transition:border-color .2s;}
+  .fi input:focus,.fi select:focus{border-color:var(--g5);}
+  .fi textarea{resize:vertical;min-height:55px;}
+  .mfoot{padding:14px 22px;border-top:1px solid var(--g2);display:flex;justify-content:flex-end;gap:8px;}
+  .bcn{background:var(--g2);border:none;border-radius:7px;padding:8px 16px;font-family:'Sora',sans-serif;font-size:12px;cursor:pointer;}
+  .bsv{background:var(--g7);color:#fff;border:none;border-radius:7px;padding:8px 18px;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
+  .bsv:hover{background:var(--g9);}
+  .bsv:disabled{background:#aaa;cursor:not-allowed;}
+  .toast{position:fixed;bottom:22px;right:22px;background:var(--g9);color:#fff;padding:11px 18px;border-radius:8px;font-size:12px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.err{background:var(--rd);}
+  @media(max-width:900px){.kpi-grid{grid-template-columns:1fr 1fr;}main{padding:14px;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🥦</div>
+    <div><h1>BABIA</h1><p>CONTROL LOGÍSTICO · EMBARQUES</p></div>
+  </div>
+  <div class="hdr-r">
+    <div class="sync"><span class="dot" id="dot"></span><span id="syncLbl">Conectando…</span></div>
+    <div class="hdr-date" id="hdrDate"></div>
+  </div>
+</header>
+<main>
+  <div class="kpi-grid">
+    <div class="kpi green" data-icon="📦"><div class="kpi-l">Total Embarques</div><div class="kpi-v" id="kT">—</div><div class="kpi-s">registros activos</div></div>
+    <div class="kpi orange" data-icon="🚛"><div class="kpi-l">En Tránsito</div><div class="kpi-v" id="kTr">—</div><div class="kpi-s">en movimiento</div></div>
+    <div class="kpi green" data-icon="✅"><div class="kpi-l">Entregados</div><div class="kpi-v" id="kE">—</div><div class="kpi-s">completados</div></div>
+    <div class="kpi red" data-icon="⚠️"><div class="kpi-l">Con Incidencias</div><div class="kpi-v" id="kI">—</div><div class="kpi-s">requieren atención</div></div>
+  </div>
+  <div class="sec">Registro de Embarques</div>
+  <div class="toolbar">
+    <input type="text" id="srch" placeholder="🔍  Buscar cliente, origen, destino, ID…">
+    <select id="fSt"><option value="">Todos los estatus</option><option>En Tránsito</option><option>Entregado</option><option>Programado</option><option>Retraso</option><option>Cancelado</option></select>
+    <select id="fTi"><option value="">Todos los tipos</option><option>Exportación</option><option>Nacional</option><option>Cross-Border</option><option>Importación</option></select>
+    <button class="btn-ref" onclick="loadData()">🔄 Actualizar</button>
+    <button class="btn-add" onclick="openModal()">＋ Nuevo Embarque</button>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th onclick="sb('id')"># ID</th><th onclick="sb('cliente')">Cliente</th><th>Producto</th><th>Tipo</th>
+        <th>Origen</th><th>Destino</th><th>Transportista</th><th>Temp°C</th><th>Peso KG</th><th>#Cajas</th>
+        <th onclick="sb('diaCarga')">Día Carga</th><th onclick="sb('diaDescarga')">Día Descarga</th>
+        <th onclick="sb('fechaEntrega')">Fecha Entrega</th><th>Días Tr.</th><th onclick="sb('estatus')">Estatus</th>
+        <th>Incidencias</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+    <div class="pag" id="pag"></div>
+  </div>
+</main>
+<div class="ov" id="ov">
+  <div class="modal">
+    <div class="mhdr"><h2 id="mTitle">➕ Nuevo Embarque</h2><button class="mclose" onclick="closeModal()">✕</button></div>
+    <div class="mbody">
+      <div class="fg">
+        <div class="fi"><label>ID</label><input id="fId" placeholder="BAB-001"/></div>
+        <div class="fi"><label>Cliente</label><input id="fCl" placeholder="Nombre del cliente"/></div>
+        <div class="fi"><label>Producto</label><input id="fPr" placeholder="Brócoli, Lechuga…"/></div>
+        <div class="fi"><label>Tipo</label><select id="fTp"><option>Exportación</option><option>Nacional</option><option>Cross-Border</option><option>Importación</option></select></div>
+        <div class="fi"><label>Origen</label><input id="fOr" placeholder="Ciudad, Estado"/></div>
+        <div class="fi"><label>Destino</label><input id="fDe" placeholder="Ciudad, Estado/País"/></div>
+        <div class="fi"><label>Transportista</label><input id="fTr" placeholder="Nombre"/></div>
+        <div class="fi"><label>Unidad/Placa</label><input id="fUn" placeholder="ABC-123-D"/></div>
+        <div class="fi"><label>Temperatura °C</label><input id="fTm" type="number" placeholder="-2"/></div>
+        <div class="fi"><label>Peso KG</label><input id="fPe" type="number" placeholder="10000"/></div>
+        <div class="fi"><label>#Cajas</label><input id="fCa" type="number" placeholder="400"/></div>
+        <div class="fi"><label>Estatus</label><select id="fEs"><option>Programado</option><option>En Tránsito</option><option>Entregado</option><option>Retraso</option><option>Cancelado</option></select></div>
+        <div class="fi"><label>Día de Carga</label><input id="fDC" type="date"/></div>
+        <div class="fi"><label>Día de Descarga</label><input id="fDD" type="date"/></div>
+        <div class="fi full"><label>Fecha de Entrega</label><input id="fFE" type="date"/></div>
+        <div class="fi full"><label>Incidencias</label><input id="fIn" placeholder="Describe cualquier problema…"/></div>
+        <div class="fi full"><label>Observaciones</label><textarea id="fOb" placeholder="Notas adicionales…"></textarea></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="bcn" onclick="closeModal()">Cancelar</button>
+      <button class="bsv" id="bSv" onclick="saveEmbarque()">Guardar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────────────
+const SHEET_ID = '2PACX-1vSKaBx_iVlmV1T2bxItKTX7m9kN-irnTh_Ip1zsUpvYAZuq4rIAiowLVbAZlBL7Ai-3Kw975jkkrKce';
+const CSV = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=0&single=true&output=csv`;
+const API = 'https://script.google.com/macros/s/AKfycbxRj15DuazGsr2mi3QK6Lk00G6bzTJyBBgf0QPXtkvWEdnnDwkTQw-0wPxvfaGOnsnjRg/exec';
+const PROXY = `https://api.allorigins.win/get?url=${encodeURIComponent(CSV)}`;
+
+let data=[], editId=null, sk=null, sa=true, pg=1;
+const PP=15;
+
+// ── LOAD ─────────────────────────────────────────────────────────────────
+async function loadData(){
+  setSync('loading');
+  try{
+    const r = await fetch(PROXY);
+    const j = await r.json();
+    data = parseCSV(j.contents);
+    setSync('ok');
+    pg=1; render();
+  }catch(e){
+    setSync('err');
+    toast('Error al conectar',true);
+  }
+}
+
+const HDR_MAP={'id':'id','ID':'id','cliente':'cliente','CLIENTE':'cliente','producto':'producto','PRODUCTO':'producto','tipo':'tipo','TIPO':'tipo','origen':'origen','ORIGEN':'origen','destino':'destino','DESTINO':'destino','transportista':'transportista','TRANSPORTISTA':'transportista','unidad':'unidad','UNIDAD':'unidad','temp':'temp','TEMP':'temp','peso':'peso','PESO':'peso','cajas':'cajas','CAJAS':'cajas','diaCarga':'diaCarga','DIACARGA':'diaCarga','diadescarga':'diaDescarga','DIADESCARGA':'diaDescarga','fechaEntrega':'fechaEntrega','FECHAENTREGA':'fechaEntrega','estatus':'estatus','ESTATUS':'estatus','incidencias':'incidencias','INCIDENCIAS':'incidencias','obs':'obs','OBS':'obs'};
+function parseCSV(txt){
+  const lines = txt.trim().split('\n');
+  if(lines.length<2) return [];
+  const rawH = lines[0].split(',').map(h=>h.replace(/"/g,'').trim());
+  const hdrs = rawH.map(h=>HDR_MAP[h]||h.toLowerCase());
+  return lines.slice(1).map(line=>{
+    const vals=[]; let cur='', inQ=false;
+    for(let c of line){
+      if(c==='"'){inQ=!inQ;}
+      else if(c===','&&!inQ){vals.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    vals.push(cur.trim());
+    const o={};
+    hdrs.forEach((h,i)=>o[h]=(vals[i]||'').replace(/^"|"$/g,'').trim());
+    return o;
+  }).filter(r=>r.id&&r.id.trim());
+}
+
+async function postAPI(body){
+  try{ await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); }catch(e){}
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────────────────
+function setSync(s){
+  const d=document.getElementById('dot'), l=document.getElementById('syncLbl');
+  d.className='dot'+(s==='err'?' off':'');
+  l.textContent=s==='ok'?'Sincronizado con Google Sheets':s==='loading'?'Actualizando…':'Sin conexión';
+}
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(err?' err':'');
+  setTimeout(()=>t.className='toast',3000);
+}
+function fd(d){
+  if(!d)return'—'; const s=String(d);
+  if(s.includes('/'))return s;
+  const[y,m,day]=s.split('-');
+  return day&&m&&y?`${day}/${m}/${y}`:s;
+}
+function dd(a,b){
+  if(!a||!b)return'—';
+  const diff=(new Date(b)-new Date(a))/86400000;
+  return isNaN(diff)?'—':diff+'d';
+}
+function pill(s){
+  const m={'En Tránsito':'pt','Entregado':'pe','Programado':'pp','Retraso':'pr','Cancelado':'pc'};
+  return`<span class="pill ${m[s]||'pp'}">${s||'—'}</span>`;
+}
+
+// ── TABLE ─────────────────────────────────────────────────────────────────
+function filtered(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  const st=document.getElementById('fSt').value;
+  const ti=document.getElementById('fTi').value;
+  let f=data.filter(e=>{
+    const m=!q||[e.ID||e.id,e.CLIENTE||e.cliente,e.ORIGEN||e.origen,e.DESTINO||e.destino,e.PRODUCTO||e.producto,e.TRANSPORTISTA||e.transportista].some(v=>v&&v.toLowerCase().includes(q));
+    return m&&(!st||e.ESTATUS||e.estatus===st)&&(!ti||e.TIPO||e.tipo===ti);
+  });
+  if(sk) f.sort((a,b)=>{let va=a[sk]||'',vb=b[sk]||''; return sa?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));});
+  return f;
+}
+
+function render(){
+  const f=filtered();
+  document.getElementById('kT').textContent=f.length;
+  document.getElementById('kTr').textContent=f.filter(e=>e.ESTATUS||e.estatus==='En Tránsito').length;
+  document.getElementById('kE').textContent=f.filter(e=>e.ESTATUS||e.estatus==='Entregado').length;
+  document.getElementById('kI').textContent=f.filter(e=>e.INCIDENCIAS||e.incidencias&&e.INCIDENCIAS||e.incidencias.trim()).length;
+  const s=(pg-1)*PP, paged=f.slice(s,s+PP);
+  const tb=document.getElementById('tb');
+  if(!f.length){tb.innerHTML=`<tr><td colspan="17"><div class="empty">🥦 No se encontraron embarques.</div></td></tr>`;document.getElementById('pag').innerHTML='';return;}
+  tb.innerHTML=paged.map(e=>`<tr>
+    <td><span class="badge">${e.ID||e.id||'—'}</span></td>
+    <td>${e.CLIENTE||e.cliente||'—'}</td><td>${e.PRODUCTO||e.producto||'—'}</td><td>${e.TIPO||e.tipo||'—'}</td>
+    <td>${e.ORIGEN||e.origen||'—'}</td><td>${e.DESTINO||e.destino||'—'}</td><td>${e.TRANSPORTISTA||e.transportista||'—'}</td>
+    <td><span class="temp">${e.TEMP||e.temp!=null&&e.TEMP||e.temp!==''?e.TEMP||e.temp+'°C':'—'}</span></td>
+    <td>${e.PESO||e.peso?Number(e.PESO||e.peso).toLocaleString():'—'}</td><td>${e.CAJAS||e.cajas||'—'}</td>
+    <td>${fd(e.DIACARGA||e.diaCarga)}</td><td>${fd(e.DIADESCARGA||e.diaDescarga)}</td><td>${fd(e.FECHAENTREGA||e.fechaEntrega)}</td>
+    <td>${dd(e.DIACARGA||e.diaCarga,e.DIADESCARGA||e.diaDescarga)}</td><td>${pill(e.ESTATUS||e.estatus)}</td>
+    <td style="color:${e.INCIDENCIAS||e.incidencias&&e.INCIDENCIAS||e.incidencias.trim()?'#C62828':'#bbb'}">${e.INCIDENCIAS||e.incidencias||'—'}</td>
+    <td>
+      <button onclick='editRow(${JSON.stringify(e.ID||e.id)})' style="background:none;border:none;cursor:pointer;font-size:14px">✏️</button>
+      <button onclick='delRow(${JSON.stringify(e.ID||e.id)})' style="background:none;border:none;cursor:pointer;font-size:14px">🗑️</button>
+    </td>
+  </tr>`).join('');
+  const tp=Math.ceil(f.length/PP);
+  let btns='';
+  for(let p=1;p<=tp;p++) btns+=`<button class="pb${p===pg?' active':''}" onclick="goP(${p})">${p}</button>`;
+  document.getElementById('pag').innerHTML=`<span>Mostrando ${s+1}–${Math.min(s+PP,f.length)} de ${f.length}</span><div class="pbtns">${btns}</div>`;
+}
+
+function goP(p){pg=p;render();}
+function sb(k){sk===k?sa=!sa:(sk=k,sa=true);pg=1;render();}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+function openModal(e=null){
+  editId=e?e.ID||e.id:null;
+  document.getElementById('mTitle').textContent=e?'✏️ Editar Embarque':'➕ Nuevo Embarque';
+  const m=e||{};
+  document.getElementById('fId').value=m.id||'';
+  document.getElementById('fCl').value=m.cliente||'';
+  document.getElementById('fPr').value=m.producto||'';
+  document.getElementById('fTp').value=m.tipo||'Exportación';
+  document.getElementById('fOr').value=m.origen||'';
+  document.getElementById('fDe').value=m.destino||'';
+  document.getElementById('fTr').value=m.transportista||'';
+  document.getElementById('fUn').value=m.unidad||'';
+  document.getElementById('fTm').value=m.temp!=null?m.temp:'';
+  document.getElementById('fPe').value=m.peso||'';
+  document.getElementById('fCa').value=m.cajas||'';
+  document.getElementById('fEs').value=m.estatus||'Programado';
+  document.getElementById('fDC').value=m.diaCarga||'';
+  document.getElementById('fDD').value=m.diaDescarga||'';
+  document.getElementById('fFE').value=m.fechaEntrega||'';
+  document.getElementById('fIn').value=m.incidencias||'';
+  document.getElementById('fOb').value=m.obs||'';
+  document.getElementById('ov').classList.add('on');
+}
+function closeModal(){document.getElementById('ov').classList.remove('on');}
+
+function editRow(id){const e=data.find(x=>String(x.id)===String(id));if(e)openModal(e);}
+
+async function delRow(id){
+  if(!confirm('¿Eliminar este embarque?'))return;
+  toast('Eliminando…');
+  await postAPI({action:'delete',id});
+  setTimeout(()=>{loadData();toast('✅ Eliminado');},2000);
+}
+
+async function saveEmbarque(){
+  const btn=document.getElementById('bSv');
+  btn.disabled=true;btn.textContent='Guardando…';
+  const entry={
+    action:editId?'update':'add',
+    id:document.getElementById('fId').value,
+    cliente:document.getElementById('fCl').value,
+    producto:document.getElementById('fPr').value,
+    tipo:document.getElementById('fTp').value,
+    origen:document.getElementById('fOr').value,
+    destino:document.getElementById('fDe').value,
+    transportista:document.getElementById('fTr').value,
+    unidad:document.getElementById('fUn').value,
+    temp:document.getElementById('fTm').value,
+    peso:document.getElementById('fPe').value,
+    cajas:document.getElementById('fCa').value,
+    estatus:document.getElementById('fEs').value,
+    diaCarga:document.getElementById('fDC').value,
+    diaDescarga:document.getElementById('fDD').value,
+    fechaEntrega:document.getElementById('fFE').value,
+    incidencias:document.getElementById('fIn').value,
+    obs:document.getElementById('fOb').value,
+  };
+  if(editId)entry.id=editId;
+  await postAPI(entry);
+  closeModal();
+  setTimeout(async()=>{
+    await loadData();
+    toast(editId?'✅ Actualizado en Google Sheets':'✅ Guardado en Google Sheets');
+    btn.disabled=false;btn.textContent='Guardar';
+  },2000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.getElementById('hdrDate').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+['srch','fSt','fTi'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{pg=1;render();}));
+document.getElementById('ov').addEventListener('click',function(e){if(e.target===this)closeModal();});
+setInterval(loadData,60000);
+loadData();
+</script>
+</body>
+</html>
